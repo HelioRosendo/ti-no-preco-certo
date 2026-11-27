@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TI no Preço Certo - Calculadora e Gerador de Orçamentos de Infraestrutura</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            dark: '#0f172a',
+                            surface: '#1e293b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+            .print-card { border: none !important; box-shadow: none !important; background: white !important; color: black !important; padding: 0 !important; }
+            .print-table th, .print-table td { border-color: #cbd5e1 !important; color: black !important; }
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col custom-scrollbar">
+
+    <!-- NAVBAR NAVEGAÇÃO -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- LOGO E IDENTIDADE -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-sky-500/20">
+                        <i class="fa-solid fa-network-wired text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-sky-400 bg-clip-text text-transparent">TI no Preço Certo</span>
+                            <span class="bg-sky-500/10 text-sky-400 border border-sky-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Infra & Redes</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 hidden sm:block">Orçamentos de Infraestrutura de TI e Cabeamento Estruturado</p>
+                    </div>
+                </div>
+
+                <!-- MENU DE ABAS -->
+                <nav class="hidden md:flex items-center gap-1">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-tab px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 bg-sky-600 text-white">
+                        <i class="fa-solid fa-calculator"></i> Orçamento
+                    </button>
+                    <button onclick="switchTab('proposal')" id="nav-proposal" class="nav-tab px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-file-contract"></i> Proposta Técnica
+                    </button>
+                    <button onclick="switchTab('saved')" id="nav-saved" class="nav-tab px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-folder-open"></i> Meus Orçamentos
+                    </button>
+                </nav>
+
+                <!-- BOTÕES DE AÇÃO -->
+                <div class="flex items-center gap-2">
+                    <button onclick="resetCurrentBudget()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-slate-700 transition" title="Novo Orçamento">
+                        <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">Novo</span>
+                    </button>
+                    <button onclick="printProposal()" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-sky-600/30 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i> <span>Exportar PDF</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MOBILE NAVIGATION -->
+        <div class="md:hidden flex border-t border-slate-800 bg-slate-900/90 px-4 py-2 justify-around text-xs">
+            <button onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="py-1 text-sky-400 font-semibold">Orçamento</button>
+            <button onclick="switchTab('proposal')" id="mob-nav-proposal" class="py-1 text-slate-400">Proposta PDF</button>
+            <button onclick="switchTab('saved')" id="mob-nav-saved" class="py-1 text-slate-400">Salvos</button>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================= ABA 1: CALCULADORA & EDICÃO DE ORÇAMENTO ================= -->
+        <div id="tab-content-dashboard" class="space-y-6">
+
+            <!-- PRESETS DE KITS RÁPIDOS E METADADOS DO CLIENTE -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4 no-print">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-sky-400 flex items-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> Monte Rápido com Kits Pré-Configurados
+                        </h2>
+                        <p class="text-xs text-slate-400">Selecione um preset para carregar materiais e mão de obra automaticamente</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="loadPreset('rack12u')" class="px-3 py-1.5 bg-slate-800 hover:bg-sky-600/20 hover:border-sky-500/50 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-server text-sky-400"></i> Kit Rack 12U Wall
+                        </button>
+                        <button onclick="loadPreset('cat6_10pts')" class="px-3 py-1.5 bg-slate-800 hover:bg-sky-600/20 hover:border-sky-500/50 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-ethernet text-emerald-400"></i> Cabeamento 10 Pontos Cat6
+                        </button>
+                        <button onclick="loadPreset('wifi_corp')" class="px-3 py-1.5 bg-slate-800 hover:bg-sky-600/20 hover:border-sky-500/50 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-wifi text-cyan-400"></i> Rede Wi-Fi Corporativa (3 APs)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- DADOS DO CLIENTE E DO PROJETO -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Nome do Cliente / Empresa *</label>
+                        <input type="text" id="client-name" value="Empresa Exemplo LTDA" oninput="saveCurrentBudgetState()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">CNPJ ou CPF</label>
+                        <input type="text" id="client-doc" value="12.345.678/0001-90" oninput="saveCurrentBudgetState()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Título do Serviço / Projeto *</label>
+                        <input type="text" id="project-title" value="Instalação de Cabeamento Cat6 e Organização de Rack" oninput="saveCurrentBudgetState()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Validade (dias)</label>
+                            <input type="number" id="budget-validity" value="15" oninput="saveCurrentBudgetState()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Status</label>
+                            <select id="budget-status" onchange="saveCurrentBudgetState()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-white focus:outline-none focus:border-sky-500">
+                                <option value="Rascunho">Rascunho</option>
+                                <option value="Enviado">Enviado</option>
+                                <option value="Aprovado">Aprovado</option>
+                                <option value="Recusado">Recusado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAINEL SUPERIOR: KPIS DE PRECIFICAÇÃO E MARGEM -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Custo Direto Total -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Custo Direto Total</span>
+                        <div class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-boxes-packing"></i>
+                        </div>
+                    </div>
+                    <div class="text-xl font-extrabold text-slate-200" id="kpi-direct-cost">R$ 0,00</div>
+                    <p class="text-[10px] text-slate-400 mt-1">Materiais + Mão de Obra + Custos Indiretos</p>
+                </div>
+
+                <!-- Impostos & Despesas -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Impostos Escolhidos</span>
+                        <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                    </div>
+                    <div class="text-xl font-extrabold text-amber-400" id="kpi-tax-value">R$ 0,00</div>
+                    <p class="text-[10px] text-slate-400 mt-1"><span id="kpi-tax-percent">6</span>% sobre o Preço Bruto de Venda</p>
+                </div>
+
+                <!-- Lucro Líquido Real -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Lucro Líquido Estimado</span>
+                        <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                    </div>
+                    <div class="text-xl font-extrabold text-emerald-400" id="kpi-net-profit">R$ 0,00</div>
+                    <p class="text-[10px] text-slate-400 mt-1">Margem Líquida Real: <strong id="kpi-profit-margin" class="text-emerald-300">0%</strong></p>
+                </div>
+
+                <!-- Preço Final Sugerido ao Cliente -->
+                <div class="bg-slate-900 border border-sky-500/40 rounded-2xl p-4 shadow-xl bg-gradient-to-br from-slate-900 via-slate-900 to-sky-950/40">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[11px] font-semibold text-sky-400 uppercase tracking-wider">VALOR TOTAL DA PROPOSTA</span>
+                        <div class="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-black text-white tracking-tight" id="kpi-final-price">R$ 0,00</div>
+                    <p class="text-[10px] text-slate-400 mt-1">Preço Final Sugerido ao Cliente</p>
+                </div>
+            </div>
+
+            <!-- SEÇÕES DE ORÇAMENTO EM CARDS / TABS -->
+            <div class="space-y-6">
+
+                <!-- 1. LEVANTAMENTO DE MATERIAIS -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                                <i class="fa-solid fa-box text-sky-400"></i> 1. Materiais & Equipamentos de TI
+                            </h3>
+                            <p class="text-xs text-slate-400">Cabos, conectores, switches, patch panels, organizadores e infraestrutura</p>
+                        </div>
+                        <button onclick="addMaterialRow()" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5 self-start sm:self-auto">
+                            <i class="fa-solid fa-plus"></i> Adicionar Item
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-950 text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-800">
+                                <tr>
+                                    <th class="py-2.5 px-3 min-w-[140px]">Categoria</th>
+                                    <th class="py-2.5 px-3 min-w-[200px]">Descrição do Material</th>
+                                    <th class="py-2.5 px-3 text-center w-20">Qtd</th>
+                                    <th class="py-2.5 px-3 text-center w-20">Unid</th>
+                                    <th class="py-2.5 px-3 text-right w-28">Custo Unit. (R$)</th>
+                                    <th class="py-2.5 px-3 text-right w-24">Margem (%)</th>
+                                    <th class="py-2.5 px-3 text-right w-32">Total Venda (R$)</th>
+                                    <th class="py-2.5 px-3 text-center w-12"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="materials-table-body" class="divide-y divide-slate-800/60">
+                                <!-- Linhas dinamizadas via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. LEVANTAMENTO DE MÃO DE OBRA E SERVIÇOS -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                                <i class="fa-solid fa-screwdriver-wrench text-emerald-400"></i> 2. Mão de Obra & Serviços Técnicos
+                            </h3>
+                            <p class="text-xs text-slate-400">Passagem de cabos, montagem de rack, certificação, fusão e configurações</p>
+                        </div>
+                        <button onclick="addLaborRow()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5 self-start sm:self-auto">
+                            <i class="fa-solid fa-plus"></i> Adicionar Serviço
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-950 text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-800">
+                                <tr>
+                                    <th class="py-2.5 px-3 min-w-[220px]">Tipo de Serviço</th>
+                                    <th class="py-2.5 px-3 text-center w-28">Métrica</th>
+                                    <th class="py-2.5 px-3 text-center w-24">Quantidade</th>
+                                    <th class="py-2.5 px-3 text-right w-32">Valor Unit. (R$)</th>
+                                    <th class="py-2.5 px-3 text-right w-36">Total Serviço (R$)</th>
+                                    <th class="py-2.5 px-3 text-center w-12"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="labor-table-body" class="divide-y divide-slate-800/60">
+                                <!-- Linhas dinamizadas via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. CUSTOS INDIRETOS E LOGÍSTICA -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                                    <i class="fa-solid fa-truck-ramp-box text-amber-400"></i> 3. Custos Indiretos & Logística
+                                </h3>
+                                <p class="text-xs text-slate-400">Deslocamento, alimentação, estada e ferramentas</p>
+                            </div>
+                            <button onclick="addIndirectRow()" class="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i> Adicionar
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-950 text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-800">
+                                    <tr>
+                                        <th class="py-2 px-3">Descrição da Despesa</th>
+                                        <th class="py-2 px-3 text-right w-28">Valor (R$)</th>
+                                        <th class="py-2 px-3 text-center w-12"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="indirect-table-body" class="divide-y divide-slate-800/60">
+                                    <!-- Linhas via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 4. CONFIGURAÇÃO DE IMPOSTOS E PRICING -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider mb-1">
+                                <i class="fa-solid fa-calculator text-cyan-400"></i> 4. Formação de Preço (Pricing)
+                            </h3>
+                            <p class="text-xs text-slate-400 mb-4">Ajuste os percentuais de impostos e a margem de lucro global</p>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 mb-1">Alíquota de Imposto (%)</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" id="tax-rate" value="6" step="0.5" min="0" oninput="calculateAllTotals()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500">
+                                        <span class="text-xs font-bold text-slate-400">%</span>
+                                    </div>
+                                    <span class="text-[10px] text-slate-500 mt-1 block">Ex: Simples Nacional 6%, MEI 0%</span>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 mb-1">Margem de Lucro Desejada (%)</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" id="target-margin" value="25" step="1" min="0" oninput="calculateAllTotals()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500">
+                                        <span class="text-xs font-bold text-slate-400">%</span>
+                                    </div>
+                                    <span class="text-[10px] text-slate-500 mt-1 block">Aplicada sobre serviços e custos</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumo rápido interno -->
+                        <div class="mt-4 p-3 bg-slate-950 rounded-xl border border-slate-800/80 text-xs space-y-1">
+                            <div class="flex justify-between text-slate-400">
+                                <span>Total Materiais com Margem:</span>
+                                <span id="summary-materials-total" class="font-semibold text-slate-200">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Total Mão de Obra de TI:</span>
+                                <span id="summary-labor-total" class="font-semibold text-slate-200">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Custos Indiretos Logística:</span>
+                                <span id="summary-indirect-total" class="font-semibold text-slate-200">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= ABA 2: PROPOSTA TÉCNICA E IMPRESSÃO PDF ================= -->
+        <div id="tab-content-proposal" class="hidden space-y-6">
+
+            <!-- BARRA DE AÇÕES DA PROPOSTA -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Proposta Técnica & Comercial de TI</h3>
+                        <p class="text-xs text-slate-400">Visualização pronta para salvar em PDF ou imprimir para o cliente</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button onclick="switchTab('dashboard')" class="flex-1 sm:flex-initial px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700 transition">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar Editar
+                    </button>
+                    <button onclick="printProposal()" class="flex-1 sm:flex-initial px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-sky-600/30 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-print"></i> Imprimir / Salvar PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- CARTÃO DE PROPOSTA FORMATADO (IMPRESSÃO CLEAN) -->
+            <div id="printable-area" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-10 shadow-2xl space-y-8 print-card">
+                
+                <!-- CABEÇALHO DO ORÇAMENTO -->
+                <div class="flex flex-col sm:flex-row justify-between items-start border-b border-slate-800 pb-6 gap-6">
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-sky-500 inline-block"></span>
+                            <span class="text-xs font-bold uppercase tracking-widest text-sky-400">Proposta Técnica de Infraestrutura de TI</span>
+                        </div>
+                        <h1 id="prop-project-title" class="text-2xl sm:text-3xl font-extrabold text-white">Instalação de Cabeamento Cat6</h1>
+                        <p class="text-xs text-slate-400">Cliente: <strong id="prop-client-name" class="text-slate-200">Empresa Exemplo LTDA</strong> <span id="prop-client-doc" class="ml-1 text-slate-500"></span></p>
+                    </div>
+
+                    <!-- MINHA EMPRESA / EMISSOR -->
+                    <div class="text-left sm:text-right text-xs space-y-1 bg-slate-950 sm:bg-transparent p-3 sm:p-0 rounded-lg w-full sm:w-auto">
+                        <p class="font-bold text-white text-sm" id="prop-provider-name">TechNet Solution & Infra</p>
+                        <p class="text-slate-400" id="prop-provider-contact">contato@technetinfra.com.br | (11) 99999-8888</p>
+                        <p class="text-slate-400">Data de Emissão: <span id="prop-issue-date" class="font-semibold text-slate-300">26/11/2026</span></p>
+                        <p class="text-slate-400">Validade da Proposta: <span id="prop-validity-days" class="font-semibold text-slate-300">15 dias</span></p>
+                    </div>
+                </div>
+
+                <!-- TABELA 1: MATERIAIS NA PROPOSTA -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-boxes-stacked text-sky-400"></i> Relação de Materiais e Equipamentos
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300 border border-slate-800 print-table">
+                            <thead class="bg-slate-950 text-slate-400 uppercase font-semibold text-[10px] border-b border-slate-800">
+                                <tr>
+                                    <th class="py-2.5 px-3">Item / Categoria</th>
+                                    <th class="py-2.5 px-3">Descrição do Material</th>
+                                    <th class="py-2.5 px-3 text-center">Qtd</th>
+                                    <th class="py-2.5 px-3 text-center">Unid</th>
+                                    <th class="py-2.5 px-3 text-right">Valor Unit.</th>
+                                    <th class="py-2.5 px-3 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prop-materials-tbody" class="divide-y divide-slate-800">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TABELA 2: SERVIÇOS NA PROPOSTA -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-400"></i> Mão de Obra e Serviços Especializados
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300 border border-slate-800 print-table">
+                            <thead class="bg-slate-950 text-slate-400 uppercase font-semibold text-[10px] border-b border-slate-800">
+                                <tr>
+                                    <th class="py-2.5 px-3">Descrição do Serviço Técnico</th>
+                                    <th class="py-2.5 px-3 text-center">Métrica</th>
+                                    <th class="py-2.5 px-3 text-center">Qtd</th>
+                                    <th class="py-2.5 px-3 text-right">Valor Unit.</th>
+                                    <th class="py-2.5 px-3 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prop-labor-tbody" class="divide-y divide-slate-800">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- RESUMO FINANCEIRO TOTAL E CONDIÇÕES DE PAGAMENTO -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+                    <!-- Termos e Condições -->
+                    <div class="space-y-3 text-xs text-slate-400">
+                        <h4 class="font-bold text-slate-200 uppercase tracking-wider">Condições Comerciais & Garantia</h4>
+                        <ul class="space-y-1.5 list-disc list-inside">
+                            <li><strong class="text-slate-300">Garantia dos Serviços:</strong> 90 dias para cabeamento e montagem.</li>
+                            <li><strong class="text-slate-300">Garantia dos Equipamentos:</strong> Conforme fabricante (ex: Furukawa/Dell).</li>
+                            <li><strong class="text-slate-300">Condições de Pagamento:</strong> 50% no aceite e 50% na entrega e certificação.</li>
+                            <li><strong class="text-slate-300">Formas de Pagamento:</strong> PIX, Transferência Bancária ou Boleto.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Quadro do Valor Total -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 flex flex-col justify-between space-y-3">
+                        <div class="space-y-1 text-xs">
+                            <div class="flex justify-between text-slate-400">
+                                <span>Subtotal Materiais:</span>
+                                <span id="prop-subtotal-materials" class="font-medium text-slate-200">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Subtotal Mão de Obra e Logística:</span>
+                                <span id="prop-subtotal-labor" class="font-medium text-slate-200">R$ 0,00</span>
+                            </div>
+                        </div>
+                        <div class="border-t border-slate-800 pt-3 flex items-center justify-between">
+                            <span class="text-sm font-bold text-white uppercase tracking-wider">VALOR TOTAL:</span>
+                            <span id="prop-total-val" class="text-2xl font-black text-sky-400">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TERMO DE ACEITE -->
+                <div class="pt-8 border-t border-slate-800 text-xs">
+                    <p class="text-center text-slate-400 mb-8">Estando de acordo com os valores e condições acima discriminadas, favor assinar e retornar o presente orçamento.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-12 text-center">
+                        <div>
+                            <div class="border-b border-slate-700 pb-1 mb-2"></div>
+                            <p class="font-bold text-slate-200" id="prop-client-signature">De acordo: Empresa Exemplo LTDA</p>
+                            <p class="text-slate-500">Data: ____/____/________</p>
+                        </div>
+                        <div>
+                            <div class="border-b border-slate-700 pb-1 mb-2"></div>
+                            <p class="font-bold text-slate-200">TechNet Solution & Infraestrutura</p>
+                            <p class="text-slate-500">Responsável Técnico TI</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================= ABA 3: MEUS ORÇAMENTOS SALVOS (LOCALSTORAGE) ================= -->
+        <div id="tab-content-saved" class="hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-folder-open text-sky-400"></i> Orçamentos Salvos Localmente
+                        </h3>
+                        <p class="text-xs text-slate-400">Histórico de orçamentos gravados no seu navegador</p>
+                    </div>
+                    <button onclick="saveCurrentBudgetToList()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition flex items-center gap-2 self-start sm:self-auto">
+                        <i class="fa-solid fa-floppy-disk"></i> Salvar Orçamento Atual
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-950 text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-800">
+                            <tr>
+                                <th class="py-3 px-4">Cliente / Empresa</th>
+                                <th class="py-3 px-4">Título do Projeto</th>
+                                <th class="py-3 px-4 text-center">Status</th>
+                                <th class="py-3 px-4 text-right">Valor Total</th>
+                                <th class="py-3 px-4 text-center">Data</th>
+                                <th class="py-3 px-4 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="saved-budgets-table" class="divide-y divide-slate-800">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="no-saved-budgets" class="hidden text-center py-12">
+                    <i class="fa-solid fa-folder-blank text-4xl text-slate-700 mb-3"></i>
+                    <p class="text-sm text-slate-400">Nenhum orçamento salvo no histórico ainda.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500 no-print mt-auto">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>TI no Preço Certo © 2026 - Ferramenta de Precificação para Infraestrutura & Redes</span>
+            <span class="text-slate-400"><i class="fa-solid fa-shield-halved text-emerald-400"></i> Seus dados ficam salvos 100% locais no navegador</span>
+        </div>
+    </footer>
+
+    <!-- LOGICA JAVASCRIPT NATIVO -->
+    <script>
+        // ESTADO GLOBAL DO ORÇAMENTO
+        let currentBudget = {
+            materials: [],
+            labor: [],
+            indirect: []
+        };
+
+        // LISTA DE CATEGORIAS DE MATERIAIS DE TI
+        const MATERIAL_CATEGORIES = [
+            "Cabeamento & Conectores",
+            "Patch Panels & Keystones",
+            "Switches & Roteadores",
+            "Racks & Organização",
+            "No-breaks & Energia",
+            "Access Points & Wi-Fi",
+            "Eletrocalhas & Canaletas",
+            "Fixação & Identificação"
+        ];
+
+        // PRESETS PRÉ-CONFIGURADOS (KITS)
+        const KITS = {
+            rack12u: {
+                title: "Montagem & Organização de Rack Wall 12U",
+                materials: [
+                    { category: "Racks & Organização", name: "Mini Rack Wall 12U 19'' Profundidade 470mm", qty: 1, unit: "un", price: 650, margin: 25 },
+                    { category: "Patch Panels & Keystones", name: "Patch Panel 24 Portas Cat6 Furukawa", qty: 1, unit: "un", price: 320, margin: 25 },
+                    { category: "Racks & Organização", name: "Guia de Cabos Fechada 1U 19''", qty: 2, unit: "un", price: 45, margin: 30 },
+                    { category: "No-breaks & Energia", name: "Régua de Tomadas 8 Saídas 19'' com Disjuntor", qty: 1, unit: "un", price: 120, margin: 25 },
+                    { category: "Switches & Roteadores", name: "Switch 24 Portas Gigabit Gerenciável PoE", qty: 1, unit: "un", price: 2100, margin: 20 }
+                ],
+                labor: [
+                    { name: "Montagem e Fixação de Rack em Parede", metric: "Horas", qty: 4, unitPrice: 120 },
+                    { name: "Organização e Crimpagem de Patch Panel (24p)", metric: "Pontos", qty: 24, unitPrice: 25 },
+                    { name: "Identificação e Anilhamento de Pontos", metric: "Serviço", qty: 1, unitPrice: 200 }
+                ],
+                indirect: [
+                    { name: "Deslocamento / Combustível Equipe", price: 150 }
+                ]
+            },
+            cat6_10pts: {
+                title: "Cabeamento Estruturado Cat6 - 10 Pontos Duplos",
+                materials: [
+                    { category: "Cabeamento & Conectores", name: "Caixa de Cabo UTP Cat6 Furukawa (305m)", qty: 1, unit: "cx", price: 890, margin: 25 },
+                    { category: "Patch Panels & Keystones", name: "Keystone RJ45 Cat6 Fêmea", qty: 20, unit: "un", price: 18, margin: 35 },
+                    { category: "Cabeamento & Conectores", name: "Patch Cord Cat6 1.5m Azul", qty: 20, unit: "un", price: 16, margin: 30 },
+                    { category: "Eletrocalhas & Canaletas", name: "Canaleta Sistema X 50x20mm com Divisória (2m)", qty: 10, unit: "pç", price: 38, margin: 30 }
+                ],
+                labor: [
+                    { name: "Passagem de Cabeamento UTP em Canaletas/Tubulação", metric: "Pontos", qty: 20, unitPrice: 65 },
+                    { name: "Instalação de Tomadas RJ45 Fêmea e Espelhos", metric: "Pontos", qty: 20, unitPrice: 20 },
+                    { name: "Certificação de Pontos de Rede com Scanner", metric: "Pontos", qty: 20, unitPrice: 30 }
+                ],
+                indirect: [
+                    { name: "Alimentação da Equipe (2 Dias)", price: 160 },
+                    { name: "Deslocamento e Pedágios", price: 120 }
+                ]
+            },
+            wifi_corp: {
+                title: "Projeto e Instalação de Wi-Fi Corporativo (3 APs)",
+                materials: [
+                    { category: "Access Points & Wi-Fi", name: "Access Point Wi-Fi 6 Ubiquiti UniFi U6+", qty: 3, unit: "un", price: 950, margin: 20 },
+                    { category: "Switches & Roteadores", name: "Switch 8 Portas PoE Gigabit UniFi", qty: 1, unit: "un", price: 1450, margin: 20 },
+                    { category: "Cabeamento & Conectores", name: "Cabo UTP Cat6 100% Cobre (Metros)", qty: 120, unit: "m", price: 4.5, margin: 30 }
+                ],
+                labor: [
+                    { name: "Lançamento de Cabo e Fixação no Teto para APs", metric: "Pontos", qty: 3, unitPrice: 150 },
+                    { name: "Configuração de Controladora UniFi, SSIDs e VLANs", metric: "Serviço", qty: 1, unitPrice: 850 },
+                    { name: "Site Survey Pós-Instalação e Mapeamento de Cobertura", metric: "Serviço", qty: 1, unitPrice: 400 }
+                ],
+                indirect: [
+                    { name: "Aluguel de Escada Telescópica / Plataforma", price: 180 },
+                    { name: "Deslocamento", price: 100 }
+                ]
+            }
+        };
+
+        // CARREGAR APLICAÇÃO
+        window.onload = function() {
+            // Verificar se há um rascunho temporário
+            const savedState = localStorage.getItem('ti_preco_certo_current');
+            if (savedState) {
+                try {
+                    currentBudget = JSON.parse(savedState);
+                } catch(e) {
+                    loadPreset('rack12u');
+                }
+            } else {
+                loadPreset('rack12u');
+            }
+
+            renderAllTables();
+            calculateAllTotals();
+            renderSavedBudgetsTable();
+        };
+
+        // TROCA DE ABAS NA INTERFACE
+        function switchTab(tabName) {
+            document.getElementById('tab-content-dashboard').classList.add('hidden');
+            document.getElementById('tab-content-proposal').classList.add('hidden');
+            document.getElementById('tab-content-saved').classList.add('hidden');
+
+            document.querySelectorAll('.nav-tab').forEach(b => {
+                b.classList.remove('bg-sky-600', 'text-white');
+                b.classList.add('text-slate-400');
+            });
+
+            if(tabName === 'dashboard') {
+                document.getElementById('tab-content-dashboard').classList.remove('hidden');
+                document.getElementById('nav-dashboard').classList.add('bg-sky-600', 'text-white');
+            } else if(tabName === 'proposal') {
+                updateProposalView();
+                document.getElementById('tab-content-proposal').classList.remove('hidden');
+                document.getElementById('nav-proposal').classList.add('bg-sky-600', 'text-white');
+            } else if(tabName === 'saved') {
+                renderSavedBudgetsTable();
+                document.getElementById('tab-content-saved').classList.remove('hidden');
+                document.getElementById('nav-saved').classList.add('bg-sky-600', 'text-white');
+            }
+        }
+
+        // CARREGAR UM PRESET / KIT RÁPIDO
+        function loadPreset(kitKey) {
+            const kit = KITS[kitKey];
+            if(!kit) return;
+
+            document.getElementById('project-title').value = kit.title;
+
+            currentBudget.materials = kit.materials.map((m, idx) => ({ ...m, id: Date.now() + idx }));
+            currentBudget.labor = kit.labor.map((l, idx) => ({ ...l, id: Date.now() + idx + 100 }));
+            currentBudget.indirect = kit.indirect.map((i, idx) => ({ ...i, id: Date.now() + idx + 200 }));
+
+            renderAllTables();
+            calculateAllTotals();
+            saveCurrentBudgetState();
+        }
+
+        // NOVO ORÇAMENTO EM BRANCO
+        function resetCurrentBudget() {
+            if(confirm("Deseja iniciar um novo orçamento zerado?")) {
+                document.getElementById('client-name').value = "Novo Cliente";
+                document.getElementById('client-doc').value = "";
+                document.getElementById('project-title').value = "Novo Projeto de TI";
+                
+                currentBudget = { materials: [], labor: [], indirect: [] };
+                renderAllTables();
+                calculateAllTotals();
+                saveCurrentBudgetState();
+            }
+        }
+
+        // OPERAÇÕES COM MATERIAIS
+        function addMaterialRow() {
+            currentBudget.materials.push({
+                id: Date.now(),
+                category: MATERIAL_CATEGORIES[0],
+                name: "Novo Material de TI",
+                qty: 1,
+                unit: "un",
+                price: 0,
+                margin: 25
+            });
+            renderMaterialsTable();
+            calculateAllTotals();
+            saveCurrentBudgetState();
+        }
+
+        function removeMaterial(id) {
+            currentBudget.materials = currentBudget.materials.filter(m => m.id !== id);
+            renderMaterialsTable();
+            calculateAllTotals();
+            saveCurrentBudgetState();
+        }
+
+        // OPERAÇÕES COM MÃO DE OBRA
+        function addLaborRow() {
+            currentBudget.labor.push({
+                id: Date.now(),
+                name: "Novo Serviço Técnico",
+                metric: "Horas",
+                qty: 1,
+                unitPrice: 100
+            });
+            renderLaborTable();
+            calculateAllTotals();
+            saveCurrentBudgetState();
+        }
+
+        function removeLabor(id) {
+            currentBudget.labor = currentBudget.labor.filter(l => l.id !== id);
+            renderLaborTable();
+            calculateAllTotals();
+            saveCurrentBudgetState();
+        }
+
+        // OPERAÇÕES COM CUSTOS INDIRETOS
+        function addIndirectRow() {
+            currentBudget.indirect.push({
+                id: Date.now(),
+                name: "Despesa de Viagem / Alimentação",
+                price: 0
+            });
+            renderIndirectTable();
+            calculateAllTotals();
+            saveCurrentBudgetState();
+        }
+
+        function removeIndirect(id) {
+            currentBudget.indirect = currentBudget.indirect.filter(i => i.id !== id);
+            renderIndirectTable();
+            calculateAllTotals();
+            saveCurrentBudgetState();
+        }
+
+        // RENDERIZAÇÃO DAS TABELAS NO DASHBOARD
+        function renderAllTables() {
+            renderMaterialsTable();
+            renderLaborTable();
+            renderIndirectTable();
+        }
+
+        function renderMaterialsTable() {
+            const tbody = document.getElementById('materials-table-body');
+            tbody.innerHTML = '';
+
+            currentBudget.materials.forEach((item, index) => {
+                const itemTotalSale = item.qty * item.price * (1 + (item.margin / 100));
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition";
+                tr.innerHTML = `
+                    <td class="py-2 px-3">
+                        <select onchange="updateMaterial(${item.id}, 'category', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-300">
+                            ${MATERIAL_CATEGORIES.map(c => `<option value="${c}" ${c === item.category ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="py-2 px-3">
+                        <input type="text" value="${escapeHtml(item.name)}" oninput="updateMaterial(${item.id}, 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-white">
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                        <input type="number" min="0.1" step="any" value="${item.qty}" oninput="updateMaterial(${item.id}, 'qty', parseFloat(this.value)||0)" class="w-16 text-center bg-slate-950 border border-slate-800 rounded py-1 text-xs text-white">
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                        <select onchange="updateMaterial(${item.id}, 'unit', this.value)" class="bg-slate-950 border border-slate-800 rounded px-1 py-1 text-xs text-slate-300">
+                            <option value="un" ${item.unit==='un'?'selected':''}>un</option>
+                            <option value="m" ${item.unit==='m'?'selected':''}>m</option>
+                            <option value="cx" ${item.unit==='cx'?'selected':''}>cx</option>
+                            <option value="pç" ${item.unit==='pç'?'selected':''}>pç</option>
+                            <option value="kg" ${item.unit==='kg'?'selected':''}>kg</option>
+                        </select>
+                    </td>
+                    <td class="py-2 px-3 text-right">
+                        <input type="number" min="0" step="0.01" value="${item.price}" oninput="updateMaterial(${item.id}, 'price', parseFloat(this.value)||0)" class="w-24 text-right bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-white">
+                    </td>
+                    <td class="py-2 px-3 text-right">
+                        <input type="number" min="0" step="1" value="${item.margin}" oninput="updateMaterial(${item.id}, 'margin', parseFloat(this.value)||0)" class="w-16 text-right bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-emerald-400">
+                    </td>
+                    <td class="py-2 px-3 text-right font-semibold text-sky-400">
+                        ${formatCurrency(itemTotalSale)}
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                        <button onclick="removeMaterial(${item.id})" class="text-slate-500 hover:text-rose-400 transition"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateMaterial(id, field, value) {
+            const item = currentBudget.materials.find(m => m.id === id);
+            if(item) {
+                item[field] = value;
+                calculateAllTotals();
+                saveCurrentBudgetState();
+                if(field === 'qty' || field === 'price' || field === 'margin') {
+                    renderMaterialsTable();
+                }
+            }
+        }
+
+        function renderLaborTable() {
+            const tbody = document.getElementById('labor-table-body');
+            tbody.innerHTML = '';
+
+            currentBudget.labor.forEach(item => {
+                const totalLabor = item.qty * item.unitPrice;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition";
+                tr.innerHTML = `
+                    <td class="py-2 px-3">
+                        <input type="text" value="${escapeHtml(item.name)}" oninput="updateLabor(${item.id}, 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-white">
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                        <select onchange="updateLabor(${item.id}, 'metric', this.value)" class="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-300">
+                            <option value="Horas" ${item.metric==='Horas'?'selected':''}>Horas</option>
+                            <option value="Pontos" ${item.metric==='Pontos'?'selected':''}>Pontos</option>
+                            <option value="Metros" ${item.metric==='Metros'?'selected':''}>Metros</option>
+                            <option value="Serviço" ${item.metric==='Serviço'?'selected':''}>Serviço (Global)</option>
+                        </select>
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                        <input type="number" min="1" step="any" value="${item.qty}" oninput="updateLabor(${item.id}, 'qty', parseFloat(this.value)||0)" class="w-20 text-center bg-slate-950 border border-slate-800 rounded py-1 text-xs text-white">
+                    </td>
+                    <td class="py-2 px-3 text-right">
+                        <input type="number" min="0" step="0.01" value="${item.unitPrice}" oninput="updateLabor(${item.id}, 'unitPrice', parseFloat(this.value)||0)" class="w-24 text-right bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-white">
+                    </td>
+                    <td class="py-2 px-3 text-right font-semibold text-emerald-400">
+                        ${formatCurrency(totalLabor)}
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                        <button onclick="removeLabor(${item.id})" class="text-slate-500 hover:text-rose-400 transition"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateLabor(id, field, value) {
+            const item = currentBudget.labor.find(l => l.id === id);
+            if(item) {
+                item[field] = value;
+                calculateAllTotals();
+                saveCurrentBudgetState();
+                if(field === 'qty' || field === 'unitPrice') {
+                    renderLaborTable();
+                }
+            }
+        }
+
+        function renderIndirectTable() {
+            const tbody = document.getElementById('indirect-table-body');
+            tbody.innerHTML = '';
+
+            currentBudget.indirect.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition";
+                tr.innerHTML = `
+                    <td class="py-2 px-3">
+                        <input type="text" value="${escapeHtml(item.name)}" oninput="updateIndirect(${item.id}, 'name', this.value)" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-white">
+                    </td>
+                    <td class="py-2 px-3 text-right">
+                        <input type="number" min="0" step="0.01" value="${item.price}" oninput="updateIndirect(${item.id}, 'price', parseFloat(this.value)||0)" class="w-24 text-right bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-white">
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                        <button onclick="removeIndirect(${item.id})" class="text-slate-500 hover:text-rose-400 transition"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateIndirect(id, field, value) {
+            const item = currentBudget.indirect.find(i => i.id === id);
+            if(item) {
+                item[field] = value;
+                calculateAllTotals();
+                saveCurrentBudgetState();
+            }
+        }
+
+        // CÁLCULO FINANCEIRO DE TOTAIS E MARGEM
+        function calculateAllTotals() {
+            // 1. Custo de Materiais (Custo x Venda)
+            let rawMaterialCost = 0;
+            let totalMaterialsSale = 0;
+            currentBudget.materials.forEach(m => {
+                const cost = m.qty * m.price;
+                rawMaterialCost += cost;
+                totalMaterialsSale += cost * (1 + (m.margin / 100));
+            });
+
+            // 2. Mão de Obra
+            let totalLaborSale = 0;
+            currentBudget.labor.forEach(l => {
+                totalLaborSale += l.qty * l.unitPrice;
+            });
+
+            // 3. Custos Indiretos
+            let totalIndirect = 0;
+            currentBudget.indirect.forEach(i => {
+                totalIndirect += i.price;
+            });
+
+            // Custo Direto Real
+            const totalDirectCost = rawMaterialCost + totalLaborSale + totalIndirect;
+
+            // Alíquotas e Margens Globais
+            const taxRate = parseFloat(document.getElementById('tax-rate').value) || 0;
+            const targetMargin = parseFloat(document.getElementById('target-margin').value) || 0;
+
+            // Preço Bruto Final Sugerido ao Cliente
+            // Preço Venda = (Materiais com Margem Própria) + (Mão de Obra + Indiretos ajustados pela margem e imposto)
+            const baseLaborAndIndirect = (totalLaborSale + totalIndirect) * (1 + (targetMargin / 100));
+            const totalBeforeTax = totalMaterialsSale + baseLaborAndIndirect;
+            
+            // Ajuste pelo Imposto Simples/MEI (Venda = Subtotal / (1 - Imposto))
+            const finalPrice = taxRate < 100 ? totalBeforeTax / (1 - (taxRate / 100)) : totalBeforeTax;
+            const taxValue = finalPrice * (taxRate / 100);
+
+            // Lucro Líquido Real = Preço Final - Imposto - Custo de Materiais - Custos Indiretos
+            const netProfit = finalPrice - taxValue - rawMaterialCost - totalIndirect;
+            const netMarginPercent = finalPrice > 0 ? (netProfit / finalPrice) * 100 : 0;
+
+            // Atualizar KPIs na tela
+            document.getElementById('kpi-direct-cost').innerText = formatCurrency(totalDirectCost);
+            document.getElementById('kpi-tax-value').innerText = formatCurrency(taxValue);
+            document.getElementById('kpi-tax-percent').innerText = taxRate;
+            document.getElementById('kpi-net-profit').innerText = formatCurrency(netProfit);
+            document.getElementById('kpi-profit-margin').innerText = netMarginPercent.toFixed(1) + '%';
+            document.getElementById('kpi-final-price').innerText = formatCurrency(finalPrice);
+
+            // Atualizar Resumos Secundários
+            document.getElementById('summary-materials-total').innerText = formatCurrency(totalMaterialsSale);
+            document.getElementById('summary-labor-total').innerText = formatCurrency(totalLaborSale);
+            document.getElementById('summary-indirect-total').innerText = formatCurrency(totalIndirect);
+        }
+
+        // PREENCHER DADOS DA PROPOSTA TÉCNICA (PDF)
+        function updateProposalView() {
+            calculateAllTotals();
+
+            document.getElementById('prop-project-title').innerText = document.getElementById('project-title').value || "Projeto de Infraestrutura de TI";
+            document.getElementById('prop-client-name').innerText = document.getElementById('client-name').value || "Cliente Não Informado";
+            
+            const docVal = document.getElementById('client-doc').value;
+            document.getElementById('prop-client-doc').innerText = docVal ? `(Doc: ${docVal})` : '';
+            document.getElementById('prop-validity-days').innerText = (document.getElementById('budget-validity').value || 15) + " dias";
+            document.getElementById('prop-client-signature').innerText = "De acordo: " + (document.getElementById('client-name').value || "Cliente");
+
+            // Tabela de Materiais na Proposta
+            const matTbody = document.getElementById('prop-materials-tbody');
+            matTbody.innerHTML = '';
+            let subtotalMat = 0;
+
+            currentBudget.materials.forEach(m => {
+                const itemSaleTotal = m.qty * m.price * (1 + (m.margin / 100));
+                subtotalMat += itemSaleTotal;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2 px-3 text-slate-400 font-medium">${m.category}</td>
+                    <td class="py-2 px-3 font-semibold text-white">${escapeHtml(m.name)}</td>
+                    <td class="py-2 px-3 text-center">${m.qty}</td>
+                    <td class="py-2 px-3 text-center text-slate-400">${m.unit}</td>
+                    <td class="py-2 px-3 text-right">${formatCurrency(m.price * (1 + (m.margin / 100)))}</td>
+                    <td class="py-2 px-3 text-right font-semibold text-white">${formatCurrency(itemSaleTotal)}</td>
+                `;
+                matTbody.appendChild(tr);
+            });
+
+            // Tabela de Mão de Obra na Proposta
+            const laborTbody = document.getElementById('prop-labor-tbody');
+            laborTbody.innerHTML = '';
+            let subtotalLabor = 0;
+
+            currentBudget.labor.forEach(l => {
+                const totalItem = l.qty * l.unitPrice;
+                subtotalLabor += totalItem;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2 px-3 font-semibold text-white">${escapeHtml(l.name)}</td>
+                    <td class="py-2 px-3 text-center text-slate-400">${l.metric}</td>
+                    <td class="py-2 px-3 text-center">${l.qty}</td>
+                    <td class="py-2 px-3 text-right">${formatCurrency(l.unitPrice)}</td>
+                    <td class="py-2 px-3 text-right font-semibold text-white">${formatCurrency(totalItem)}</td>
+                `;
+                laborTbody.appendChild(tr);
+            });
+
+            // Somar indiretos na mão de obra para apresentação clean
+            let totalIndirect = 0;
+            currentBudget.indirect.forEach(i => totalIndirect += i.price);
+
+            const finalPriceText = document.getElementById('kpi-final-price').innerText;
+            document.getElementById('prop-subtotal-materials').innerText = formatCurrency(subtotalMat);
+            document.getElementById('prop-subtotal-labor').innerText = formatCurrency(subtotalLabor + totalIndirect);
+            document.getElementById('prop-total-val').innerText = finalPriceText;
+        }
+
+        // SALVAR ESTADO TEMPORÁRIO
+        function saveCurrentBudgetState() {
+            localStorage.setItem('ti_preco_certo_current', JSON.stringify(currentBudget));
+        }
+
+        // SALVAR ORÇAMENTO NO HISTÓRICO LOCALSTORAGE
+        function saveCurrentBudgetToList() {
+            const clientName = document.getElementById('client-name').value || "Cliente sem Nome";
+            const projectTitle = document.getElementById('project-title').value || "Sem Título";
+            const finalVal = document.getElementById('kpi-final-price').innerText;
+            const status = document.getElementById('budget-status').value;
+
+            const budgetRecord = {
+                id: Date.now(),
+                clientName,
+                projectTitle,
+                status,
+                finalVal,
+                date: new Date().toLocaleDateString('pt-BR'),
+                data: JSON.parse(JSON.stringify(currentBudget))
+            };
+
+            let list = JSON.parse(localStorage.getItem('ti_preco_certo_list') || '[]');
+            list.unshift(budgetRecord);
+            localStorage.setItem('ti_preco_certo_list', JSON.stringify(list));
+
+            alert('Orçamento salvo com sucesso no seu histórico local!');
+            renderSavedBudgetsTable();
+        }
+
+        // RENDERIZAR HISTÓRICO DE SALVOS
+        function renderSavedBudgetsTable() {
+            const tbody = document.getElementById('saved-budgets-table');
+            const emptyMsg = document.getElementById('no-saved-budgets');
+            let list = JSON.parse(localStorage.getItem('ti_preco_certo_list') || '[]');
+
+            tbody.innerHTML = '';
+            if(list.length === 0) {
+                emptyMsg.classList.remove('hidden');
+                return;
+            } else {
+                emptyMsg.classList.add('hidden');
+            }
+
+            list.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-semibold text-white">${escapeHtml(item.clientName)}</td>
+                    <td class="py-3 px-4 text-slate-300">${escapeHtml(item.projectTitle)}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${item.status==='Aprovado'?'bg-emerald-500/20 text-emerald-400':item.status==='Enviado'?'bg-sky-500/20 text-sky-400':'bg-slate-800 text-slate-400'}">
+                            ${item.status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right font-bold text-sky-400">${item.finalVal}</td>
+                    <td class="py-3 px-4 text-center text-slate-400">${item.date}</td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="loadSavedBudget(${item.id})" class="px-2 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded text-[11px] font-semibold transition" title="Carregar">
+                                <i class="fa-solid fa-folder-open"></i> Abrir
+                            </button>
+                            <button onclick="deleteSavedBudget(${item.id})" class="p-1 text-slate-500 hover:text-rose-400 transition" title="Excluir">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function loadSavedBudget(id) {
+            let list = JSON.parse(localStorage.getItem('ti_preco_certo_list') || '[]');
+            const record = list.find(b => b.id === id);
+            if(record) {
+                currentBudget = record.data;
+                document.getElementById('client-name').value = record.clientName;
+                document.getElementById('project-title').value = record.projectTitle;
+                document.getElementById('budget-status').value = record.status;
+                
+                renderAllTables();
+                calculateAllTotals();
+                switchTab('dashboard');
+            }
+        }
+
+        function deleteSavedBudget(id) {
+            if(confirm("Remover este orçamento salvo permanentemente?")) {
+                let list = JSON.parse(localStorage.getItem('ti_preco_certo_list') || '[]');
+                list = list.filter(b => b.id !== id);
+                localStorage.setItem('ti_preco_certo_list', JSON.stringify(list));
+                renderSavedBudgetsTable();
+            }
+        }
+
+        // FORMATADORES E UTILS
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
+
+        function printProposal() {
+            switchTab('proposal');
+            setTimeout(() => {
+                window.print();
+            }, 200);
+        }
+    </script>
+</body>
+</html>
