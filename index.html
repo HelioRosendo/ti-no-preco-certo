@@ -144,6 +144,14 @@
       gap: 14px;
     }
 
+    .preset-box {
+      background: var(--panel-2);
+      border: 1px dashed #475569;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
     .field {
       display: flex;
       flex-direction: column;
@@ -429,10 +437,20 @@
     <!-- Materiais e Equipamentos -->
     <section class="card">
       <h2>2. Materiais e Equipamentos</h2>
+
+      <div class="preset-box">
+        <div class="field">
+          <label for="item-precadastrado">Selecionar Item Pré-Cadastrado (preenche descrição e valor base)</label>
+          <select id="item-precadastrado" onchange="selecionarItemPrecadastrado()">
+            <option value="">-- Escolha um item pré-cadastrado ou digite abaixo --</option>
+          </select>
+        </div>
+      </div>
+
       <div class="grid-3">
         <div class="field">
           <label for="mat-desc">Descrição do Material / Equipamento</label>
-          <input id="mat-desc" type="text" placeholder="Ex: Cabo UTP Cat6 Caixa 305m" />
+          <input id="mat-desc" type="text" placeholder="Ex: Switch Gerenciável 24 Portas Gigabit" />
         </div>
         <div class="field">
           <label for="mat-qtd">Quantidade</label>
@@ -564,7 +582,51 @@
 
   <script>
     const STORAGE_EMPRESA = "ti_preco_certo_empresa_v1";
+
+    // Catálogo de itens pré-cadastrados de TI, Redes e Infraestrutura
+    const ITENS_PRECADASTRADOS = [
+      { nome: "Switch 8 Portas Gigabit", valor: 180 },
+      { nome: "Switch Gerenciável 24 Portas Gigabit", valor: 950 },
+      { nome: "Switch PoE+ 24 Portas Gigabit", valor: 1850 },
+      { nome: "Servidor Torre Corporativo (Entry)", valor: 5800 },
+      { nome: "Servidor Rack 1U Empresarial", valor: 9500 },
+      { nome: "Modem / Roteador Empresarial Gigabit", valor: 420 },
+      { nome: "Rack de Parede 6U com Porta e Ventilação", valor: 580 },
+      { nome: "Rack de Piso 12U Organizado", valor: 1250 },
+      { nome: "Patch Panel 24 Portas Cat6", valor: 320 },
+      { nome: "Cord Panel / Organizador de Cabos 1U", valor: 65 },
+      { nome: "Cabo UTP Cat6 Caixa 305m", valor: 790 },
+      { nome: "Patch Cord Cat6 (Pacote 10 un.)", valor: 110 },
+      { nome: "Conector RJ45 Cat6 + Capa (Pacote 50 un.)", valor: 95 },
+      { nome: "Access Point Wi-Fi 6 Corporativo", valor: 780 },
+      { nome: "No-Break Senoidal 1500VA", valor: 1450 },
+      { nome: "Régua de Tomadas 19\" 8 Tomadas", valor: 135 }
+    ];
+
     let materiais = [];
+
+    function carregarSelectPrecadastrados() {
+      const select = document.getElementById("item-precadastrado");
+      ITENS_PRECADASTRADOS.forEach((item, idx) => {
+        const option = document.createElement("option");
+        option.value = idx;
+        option.textContent = `${item.nome} — ${formatarMoeda(item.valor)}`;
+        select.appendChild(option);
+      });
+    }
+
+    function selecionarItemPrecadastrado() {
+      const select = document.getElementById("item-precadastrado");
+      const idx = select.value;
+      if (idx === "") return;
+
+      const item = ITENS_PRECADASTRADOS[Number(idx)];
+      if (item) {
+        document.getElementById("mat-desc").value = item.nome;
+        document.getElementById("mat-valor").value = item.valor.toFixed(2);
+        document.getElementById("mat-qtd").focus();
+      }
+    }
 
     function formatarMoeda(valor) {
       return Number(valor || 0).toLocaleString("pt-BR", {
@@ -649,6 +711,7 @@
       document.getElementById("mat-desc").value = "";
       document.getElementById("mat-qtd").value = "1";
       document.getElementById("mat-valor").value = "0";
+      document.getElementById("item-precadastrado").value = "";
       renderizarMateriais();
       calcularTudo();
     }
@@ -684,10 +747,10 @@
 
     function aplicarKitExemplo() {
       materiais = [
-        { desc: "Rack Parede 6U com bandeja e régua de tomadas", qtd: 1, valor: 580 },
+        { desc: "Rack de Parede 6U com Porta e Ventilação", qtd: 1, valor: 580 },
         { desc: "Cabo UTP Cat6 Caixa 305m", qtd: 1, valor: 790 },
-        { desc: "Conectores RJ45 Cat6 + capas (pacote 50 un.)", qtd: 1, valor: 95 },
-        { desc: "Patch Panel 24 portas Cat6", qtd: 1, valor: 320 }
+        { desc: "Patch Panel 24 Portas Cat6", qtd: 1, valor: 320 },
+        { desc: "Cord Panel / Organizador de Cabos 1U", qtd: 1, valor: 65 }
       ];
       document.getElementById("mao-obra").value = "950";
       document.getElementById("logistica").value = "120";
@@ -836,6 +899,7 @@
       window.print();
     }
 
+    carregarSelectPrecadastrados();
     atualizarCabecalhoEmpresa();
     renderizarMateriais();
     calcularTudo();
