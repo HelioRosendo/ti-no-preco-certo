@@ -144,6 +144,12 @@
       gap: 14px;
     }
 
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+    }
+
     .preset-box {
       background: var(--panel-2);
       border: 1px dashed #475569;
@@ -479,14 +485,63 @@
       </table>
     </section>
 
-    <!-- Mão de Obra e Precificação -->
+    <!-- Mão de Obra Especificada e Precificação -->
     <section class="card">
-      <h2>3. Mão de Obra, Impostos e Margem</h2>
-      <div class="grid-3">
+      <h2>3. Mão de Obra Especificada, Impostos e Margem</h2>
+
+      <div class="preset-box">
         <div class="field">
-          <label for="mao-obra">Mão de Obra e Serviços Técnicos (R$)</label>
-          <input id="mao-obra" type="number" step="0.01" value="0" min="0" oninput="calcularTudo()" />
+          <label for="servico-precadastrado">Selecionar Serviço Técnico Pré-Cadastrado (preenche serviço, métrica e valor)</label>
+          <select id="servico-precadastrado" onchange="selecionarServicoPrecadastrado()">
+            <option value="">-- Escolha um serviço técnico ou preencha manualmente --</option>
+          </select>
         </div>
+      </div>
+
+      <div class="grid-4">
+        <div class="field">
+          <label for="srv-desc">Descrição do Serviço / Trabalho</label>
+          <input id="srv-desc" type="text" placeholder="Ex: Montagem de Rack / Passagem de Cabo" />
+        </div>
+        <div class="field">
+          <label for="srv-metrica">Métrica / Unidade</label>
+          <select id="srv-metrica">
+            <option value="Ponto">Ponto</option>
+            <option value="Rack">Rack</option>
+            <option value="Metro">Metro</option>
+            <option value="Hora">Hora</option>
+            <option value="Diária">Diária</option>
+            <option value="Serviço">Serviço</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="srv-qtd">Quantidade</label>
+          <input id="srv-qtd" type="number" step="0.01" value="1" min="0" />
+        </div>
+        <div class="field">
+          <label for="srv-valor">Valor Unitário (R$)</label>
+          <input id="srv-valor" type="number" step="0.01" value="0" min="0" />
+        </div>
+      </div>
+      <div style="margin-top: 12px;">
+        <button class="btn-primary" type="button" onclick="adicionarServico()">+ Adicionar Serviço</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Serviço / Trabalho</th>
+            <th>Métrica</th>
+            <th>Qtd</th>
+            <th>Unit.</th>
+            <th>Subtotal</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="lista-servicos"></tbody>
+      </table>
+
+      <div class="grid-3" style="margin-top: 18px;">
         <div class="field">
           <label for="logistica">Deslocamento / Logística (R$)</label>
           <input id="logistica" type="number" step="0.01" value="0" min="0" oninput="calcularTudo()" />
@@ -503,7 +558,7 @@
 
       <div class="summary-box">
         <div class="summary-item">
-          <span>Custo Base (Mat. + Serviço)</span>
+          <span>Custo Base (Mat. + Serv. + Log.)</span>
           <strong id="res-custo-base">R$ 0,00</strong>
         </div>
         <div class="summary-item">
@@ -603,15 +658,39 @@
       { nome: "Régua de Tomadas 19\" 8 Tomadas", valor: 135 }
     ];
 
+    // Catálogo de serviços técnicos correlacionados
+    const SERVICOS_PRECADASTRADOS = [
+      { nome: "Montagem e fixação de Rack", metrica: "Rack", valor: 350 },
+      { nome: "Organização e passagem de cabos em Rack (Patch Panel / Cord Panel)", metrica: "Rack", valor: 280 },
+      { nome: "Passagem de cabo de rede (Cat5e / Cat6 / Fibra)", metrica: "Ponto", valor: 95 },
+      { nome: "Crimpagem e conectorização de ponto de rede (RJ45 / Keystone)", metrica: "Ponto", valor: 45 },
+      { nome: "Identificação, etiquetagem e teste/certificação de ponto", metrica: "Ponto", valor: 35 },
+      { nome: "Instalação e configuração de Switch / VLANs", metrica: "Serviço", valor: 320 },
+      { nome: "Instalação e configuração de Servidor / Rede Local", metrica: "Serviço", valor: 650 },
+      { nome: "Instalação e ajuste de Modem / Roteador / Firewall", metrica: "Serviço", valor: 280 },
+      { nome: "Instalação e mapeamento de Access Point Wi-Fi", metrica: "Ponto", valor: 160 },
+      { nome: "Instalação e passagem de eletroduto / canaleta / perfilado", metrica: "Metro", valor: 28 },
+      { nome: "Visita técnica / diagnóstico de infraestrutura de TI", metrica: "Hora", valor: 150 }
+    ];
+
     let materiais = [];
+    let servicos = [];
 
     function carregarSelectPrecadastrados() {
-      const select = document.getElementById("item-precadastrado");
+      const selectMat = document.getElementById("item-precadastrado");
       ITENS_PRECADASTRADOS.forEach((item, idx) => {
         const option = document.createElement("option");
         option.value = idx;
         option.textContent = `${item.nome} — ${formatarMoeda(item.valor)}`;
-        select.appendChild(option);
+        selectMat.appendChild(option);
+      });
+
+      const selectSrv = document.getElementById("servico-precadastrado");
+      SERVICOS_PRECADASTRADOS.forEach((srv, idx) => {
+        const option = document.createElement("option");
+        option.value = idx;
+        option.textContent = `${srv.nome} (${srv.metrica}) — ${formatarMoeda(srv.valor)}`;
+        selectSrv.appendChild(option);
       });
     }
 
@@ -625,6 +704,20 @@
         document.getElementById("mat-desc").value = item.nome;
         document.getElementById("mat-valor").value = item.valor.toFixed(2);
         document.getElementById("mat-qtd").focus();
+      }
+    }
+
+    function selecionarServicoPrecadastrado() {
+      const select = document.getElementById("servico-precadastrado");
+      const idx = select.value;
+      if (idx === "") return;
+
+      const srv = SERVICOS_PRECADASTRADOS[Number(idx)];
+      if (srv) {
+        document.getElementById("srv-desc").value = srv.nome;
+        document.getElementById("srv-metrica").value = srv.metrica;
+        document.getElementById("srv-valor").value = srv.valor.toFixed(2);
+        document.getElementById("srv-qtd").focus();
       }
     }
 
@@ -745,6 +838,57 @@
       });
     }
 
+    function adicionarServico() {
+      const desc = document.getElementById("srv-desc").value.trim();
+      const metrica = document.getElementById("srv-metrica").value;
+      const qtd = parseFloat(document.getElementById("srv-qtd").value) || 0;
+      const valor = parseFloat(document.getElementById("srv-valor").value) || 0;
+
+      if (!desc || qtd <= 0) {
+        alert("Preencha a descrição do serviço e uma quantidade maior que zero.");
+        return;
+      }
+
+      servicos.push({ desc, metrica, qtd, valor });
+      document.getElementById("srv-desc").value = "";
+      document.getElementById("srv-metrica").value = "Ponto";
+      document.getElementById("srv-qtd").value = "1";
+      document.getElementById("srv-valor").value = "0";
+      document.getElementById("servico-precadastrado").value = "";
+      renderizarServicos();
+      calcularTudo();
+    }
+
+    function removerServico(index) {
+      servicos.splice(index, 1);
+      renderizarServicos();
+      calcularTudo();
+    }
+
+    function renderizarServicos() {
+      const tbody = document.getElementById("lista-servicos");
+      tbody.innerHTML = "";
+
+      if (servicos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:#94a3b8;">Nenhum serviço especificado ainda.</td></tr>`;
+        return;
+      }
+
+      servicos.forEach((srv, idx) => {
+        const subtotal = srv.qtd * srv.valor;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${srv.desc}</td>
+          <td>${srv.metrica}</td>
+          <td>${srv.qtd}</td>
+          <td>${formatarMoeda(srv.valor)}</td>
+          <td>${formatarMoeda(subtotal)}</td>
+          <td><button class="btn-danger" type="button" onclick="removerServico(${idx})">Remover</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
     function aplicarKitExemplo() {
       materiais = [
         { desc: "Rack de Parede 6U com Porta e Ventilação", qtd: 1, valor: 580 },
@@ -752,20 +896,26 @@
         { desc: "Patch Panel 24 Portas Cat6", qtd: 1, valor: 320 },
         { desc: "Cord Panel / Organizador de Cabos 1U", qtd: 1, valor: 65 }
       ];
-      document.getElementById("mao-obra").value = "950";
+      servicos = [
+        { desc: "Montagem e fixação de Rack", metrica: "Rack", qtd: 1, valor: 350 },
+        { desc: "Passagem de cabo de rede (Cat5e / Cat6 / Fibra)", metrica: "Ponto", qtd: 12, valor: 95 },
+        { desc: "Crimpagem e conectorização de ponto de rede (RJ45 / Keystone)", metrica: "Ponto", qtd: 12, valor: 45 },
+        { desc: "Identificação, etiquetagem e teste/certificação de ponto", metrica: "Ponto", qtd: 12, valor: 35 }
+      ];
       document.getElementById("logistica").value = "120";
       renderizarMateriais();
+      renderizarServicos();
       calcularTudo();
     }
 
     function calcularTudo() {
       const totalMateriais = materiais.reduce((acc, m) => acc + (m.qtd * m.valor), 0);
-      const maoObra = parseFloat(document.getElementById("mao-obra").value) || 0;
+      const totalServicos = servicos.reduce((acc, s) => acc + (s.qtd * s.valor), 0);
       const logistica = parseFloat(document.getElementById("logistica").value) || 0;
       const impostoPct = (parseFloat(document.getElementById("imposto-pct").value) || 0) / 100;
       const margemPct = (parseFloat(document.getElementById("margem-pct").value) || 0) / 100;
 
-      const custoBase = totalMateriais + maoObra + logistica;
+      const custoBase = totalMateriais + totalServicos + logistica;
       const divisor = Math.max(0.1, 1 - impostoPct - margemPct);
       const precoFinal = custoBase / divisor;
       const impostosValor = precoFinal * impostoPct;
@@ -778,7 +928,7 @@
 
       return {
         totalMateriais,
-        maoObra,
+        totalServicos,
         logistica,
         custoBase,
         impostosValor,
@@ -815,7 +965,19 @@
           `).join("")
         : `<tr><td colspan="4" style="text-align:center;">Sem itens de material discriminados</td></tr>`;
 
-      const maoObraLogisticaTotal = calc.maoObra + calc.logistica;
+      const linhasServicos = servicos.length > 0
+        ? servicos.map(s => `
+            <tr>
+              <td>${s.desc}</td>
+              <td style="text-align:center;">${s.metrica}</td>
+              <td style="text-align:center;">${s.qtd}</td>
+              <td style="text-align:right;">${formatarMoeda(s.valor)}</td>
+              <td style="text-align:right;">${formatarMoeda(s.qtd * s.valor)}</td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="5" style="text-align:center;">Sem serviços técnicos discriminados</td></tr>`;
+
+      const servicosLogisticaTotal = calc.totalServicos + calc.logistica;
 
       document.getElementById("pdf-area").innerHTML = `
         <div class="pdf-header">
@@ -854,21 +1016,21 @@
           <tbody>${linhasMateriais}</tbody>
         </table>
 
-        <div class="pdf-section-title">Serviços Técnicos e Condições</div>
+        <div class="pdf-section-title">Mão de Obra e Serviços Técnicos</div>
         <table class="pdf-table">
           <thead>
             <tr>
-              <th>Descrição do Serviço</th>
-              <th style="width:140px; text-align:right;">Valor</th>
+              <th>Serviço / Trabalho</th>
+              <th style="width:85px; text-align:center;">Métrica</th>
+              <th style="width:65px; text-align:center;">Qtd</th>
+              <th style="width:110px; text-align:right;">Valor Unit.</th>
+              <th style="width:120px; text-align:right;">Subtotal</th>
             </tr>
           </thead>
           <tbody>
+            ${linhasServicos}
             <tr>
-              <td>Mão de obra técnica especializada e configuração</td>
-              <td style="text-align:right;">${formatarMoeda(calc.maoObra)}</td>
-            </tr>
-            <tr>
-              <td>Deslocamento e logística operacional</td>
+              <td colspan="4">Deslocamento e logística operacional</td>
               <td style="text-align:right;">${formatarMoeda(calc.logistica)}</td>
             </tr>
           </tbody>
@@ -880,7 +1042,7 @@
 
         <div class="pdf-totals">
           <div><span>Materiais e Equipamentos:</span> <strong>${formatarMoeda(calc.totalMateriais)}</strong></div>
-          <div><span>Serviços e Logística:</span> <strong>${formatarMoeda(maoObraLogisticaTotal)}</strong></div>
+          <div><span>Serviços e Logística:</span> <strong>${formatarMoeda(servicosLogisticaTotal)}</strong></div>
           <div class="grand-total"><span>VALOR TOTAL:</span> <span>${formatarMoeda(calc.precoFinal)}</span></div>
         </div>
 
@@ -902,6 +1064,7 @@
     carregarSelectPrecadastrados();
     atualizarCabecalhoEmpresa();
     renderizarMateriais();
+    renderizarServicos();
     calcularTudo();
   </script>
 </body>
