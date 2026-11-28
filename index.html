@@ -359,4 +359,486 @@
         gap: 32px;
         margin-top: 48px;
         text-align: center;
-        font-size: 0.85
+        font-size: 0.85rem;
+      }
+
+      .sig-box {
+        flex: 1;
+      }
+
+      .sig-line {
+        border-top: 1px solid #334155;
+        padding-top: 6px;
+        margin-bottom: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <h1>TI no Preço Certo</h1>
+        <p id="header-empresa-status">Emitente: Configure os dados da sua empresa</p>
+      </div>
+      <div class="nav-actions">
+        <button class="btn-outline" type="button" onclick="abrirModalEmpresa()">⚙️ Minha Empresa</button>
+        <button class="btn-outline" type="button" onclick="aplicarKitExemplo()">⚡ Kit Cat6 + Rack</button>
+        <button class="btn-success" type="button" onclick="gerarPDF()">📄 Gerar PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Dados do Cliente e Projeto -->
+    <section class="card">
+      <h2>1. Dados do Cliente e do Projeto</h2>
+      <div class="grid-3">
+        <div class="field">
+          <label for="titulo-proposta">Título da Proposta</label>
+          <input id="titulo-proposta" type="text" value="Instalação de Cabeamento Cat6 e Organização de Rack" />
+        </div>
+        <div class="field">
+          <label for="cliente-nome">Cliente / Empresa Compradora</label>
+          <input id="cliente-nome" type="text" placeholder="Ex: Clínica Saúde Vida" />
+        </div>
+        <div class="field">
+          <label for="cliente-doc">CNPJ / CPF do Cliente</label>
+          <input id="cliente-doc" type="text" placeholder="00.000.000/0001-00" />
+        </div>
+        <div class="field">
+          <label for="cliente-contato">Contato / E-mail ou WhatsApp</label>
+          <input id="cliente-contato" type="text" placeholder="(00) 00000-0000" />
+        </div>
+        <div class="field">
+          <label for="validade-proposta">Validade da Proposta (dias)</label>
+          <input id="validade-proposta" type="number" value="15" min="1" />
+        </div>
+        <div class="field">
+          <label for="status-proposta">Status</label>
+          <select id="status-proposta">
+            <option value="Rascunho">Rascunho</option>
+            <option value="Enviado">Enviado</option>
+            <option value="Aprovado">Aprovado</option>
+            <option value="Recusado">Recusado</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Materiais e Equipamentos -->
+    <section class="card">
+      <h2>2. Materiais e Equipamentos</h2>
+      <div class="grid-3">
+        <div class="field">
+          <label for="mat-desc">Descrição do Material / Equipamento</label>
+          <input id="mat-desc" type="text" placeholder="Ex: Cabo UTP Cat6 Caixa 305m" />
+        </div>
+        <div class="field">
+          <label for="mat-qtd">Quantidade</label>
+          <input id="mat-qtd" type="number" step="0.01" value="1" min="0" />
+        </div>
+        <div class="field">
+          <label for="mat-valor">Valor Unitário (R$)</label>
+          <input id="mat-valor" type="number" step="0.01" value="0" min="0" />
+        </div>
+      </div>
+      <div style="margin-top: 12px;">
+        <button class="btn-primary" type="button" onclick="adicionarMaterial()">+ Adicionar Material</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th>Qtd</th>
+            <th>Unit.</th>
+            <th>Subtotal</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="lista-materiais"></tbody>
+      </table>
+    </section>
+
+    <!-- Mão de Obra e Precificação -->
+    <section class="card">
+      <h2>3. Mão de Obra, Impostos e Margem</h2>
+      <div class="grid-3">
+        <div class="field">
+          <label for="mao-obra">Mão de Obra e Serviços Técnicos (R$)</label>
+          <input id="mao-obra" type="number" step="0.01" value="0" min="0" oninput="calcularTudo()" />
+        </div>
+        <div class="field">
+          <label for="logistica">Deslocamento / Logística (R$)</label>
+          <input id="logistica" type="number" step="0.01" value="0" min="0" oninput="calcularTudo()" />
+        </div>
+        <div class="field">
+          <label for="imposto-pct">Impostos / Tributos (%)</label>
+          <input id="imposto-pct" type="number" step="0.1" value="6" min="0" oninput="calcularTudo()" />
+        </div>
+        <div class="field">
+          <label for="margem-pct">Margem de Lucro Desejada (%)</label>
+          <input id="margem-pct" type="number" step="0.1" value="30" min="0" oninput="calcularTudo()" />
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-item">
+          <span>Custo Base (Mat. + Serviço)</span>
+          <strong id="res-custo-base">R$ 0,00</strong>
+        </div>
+        <div class="summary-item">
+          <span>Impostos Estimados</span>
+          <strong id="res-impostos">R$ 0,00</strong>
+        </div>
+        <div class="summary-item">
+          <span>Lucro Estimado</span>
+          <strong id="res-lucro">R$ 0,00</strong>
+        </div>
+        <div class="summary-item total">
+          <span>Valor Final da Proposta</span>
+          <strong id="res-total">R$ 0,00</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Condições Comerciais -->
+    <section class="card">
+      <h2>4. Condições Comerciais e Garantia</h2>
+      <div class="field">
+        <label for="condicoes-texto">Observações, Pagamento e Garantia</label>
+        <textarea id="condicoes-texto" rows="4">• Garantia dos serviços: 90 dias sobre instalação e cabeamento.
+• Garantia dos equipamentos: conforme fabricante.
+• Condições de pagamento: 50% no aceite e 50% na conclusão/entrega.
+• Formas de pagamento: PIX, transferência bancária ou boleto.</textarea>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal de Configurações da Empresa -->
+  <div class="modal-backdrop" id="modal-empresa">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Configurações da Minha Empresa</h3>
+        <button class="btn-outline" type="button" onclick="fecharModalEmpresa()">✕</button>
+      </div>
+      <span class="badge-info">Salvo localmente no seu navegador para todas as propostas</span>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="emp-nome">Nome da Empresa / Razão Social *</label>
+          <input id="emp-nome" type="text" placeholder="Ex: Minha Empresa de TI Ltda" />
+        </div>
+        <div class="field">
+          <label for="emp-doc">CNPJ / CPF</label>
+          <input id="emp-doc" type="text" placeholder="00.000.000/0001-00" />
+        </div>
+        <div class="field">
+          <label for="emp-email">E-mail de Contato</label>
+          <input id="emp-email" type="email" placeholder="contato@suaempresa.com.br" />
+        </div>
+        <div class="field">
+          <label for="emp-telefone">Telefone / WhatsApp</label>
+          <input id="emp-telefone" type="text" placeholder="(00) 00000-0000" />
+        </div>
+        <div class="field">
+          <label for="emp-responsavel">Nome do Responsável / Assinatura</label>
+          <input id="emp-responsavel" type="text" placeholder="Ex: João Silva — Especialista em Redes" />
+        </div>
+        <div class="field">
+          <label for="emp-cidade">Cidade / UF</label>
+          <input id="emp-cidade" type="text" placeholder="Ex: Brasília - DF" />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-outline" type="button" onclick="fecharModalEmpresa()">Cancelar</button>
+        <button class="btn-success" type="button" onclick="salvarEmpresa()">Salvar Dados da Empresa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Área Formatada para Exportar PDF -->
+  <div id="pdf-area"></div>
+
+  <script>
+    const STORAGE_EMPRESA = "ti_preco_certo_empresa_v1";
+    let materiais = [];
+
+    function formatarMoeda(valor) {
+      return Number(valor || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      });
+    }
+
+    function obterEmpresa() {
+      const bruto = localStorage.getItem(STORAGE_EMPRESA);
+      if (bruto) {
+        return JSON.parse(bruto);
+      }
+      return {
+        nome: "Sua Empresa de TI",
+        doc: "",
+        email: "",
+        telefone: "",
+        responsavel: "Responsável Técnico",
+        cidade: ""
+      };
+    }
+
+    function atualizarCabecalhoEmpresa() {
+      const emp = obterEmpresa();
+      const el = document.getElementById("header-empresa-status");
+      if (emp.nome && emp.nome !== "Sua Empresa de TI") {
+        el.textContent = `Emitente: ${emp.nome}${emp.doc ? " • " + emp.doc : ""}`;
+      } else {
+        el.textContent = "Emitente: clique em 'Minha Empresa' para cadastrar seus dados";
+      }
+    }
+
+    function abrirModalEmpresa() {
+      const emp = obterEmpresa();
+      document.getElementById("emp-nome").value = emp.nome || "";
+      document.getElementById("emp-doc").value = emp.doc || "";
+      document.getElementById("emp-email").value = emp.email || "";
+      document.getElementById("emp-telefone").value = emp.telefone || "";
+      document.getElementById("emp-responsavel").value = emp.responsavel || "";
+      document.getElementById("emp-cidade").value = emp.cidade || "";
+      document.getElementById("modal-empresa").classList.add("active");
+    }
+
+    function fecharModalEmpresa() {
+      document.getElementById("modal-empresa").classList.remove("active");
+    }
+
+    function salvarEmpresa() {
+      const nome = document.getElementById("emp-nome").value.trim();
+      if (!nome) {
+        alert("Informe o nome ou razão social da sua empresa.");
+        return;
+      }
+
+      const dados = {
+        nome,
+        doc: document.getElementById("emp-doc").value.trim(),
+        email: document.getElementById("emp-email").value.trim(),
+        telefone: document.getElementById("emp-telefone").value.trim(),
+        responsavel: document.getElementById("emp-responsavel").value.trim() || "Responsável Técnico",
+        cidade: document.getElementById("emp-cidade").value.trim()
+      };
+
+      localStorage.setItem(STORAGE_EMPRESA, JSON.stringify(dados));
+      atualizarCabecalhoEmpresa();
+      fecharModalEmpresa();
+      alert("Dados da empresa salvos com sucesso!");
+    }
+
+    function adicionarMaterial() {
+      const desc = document.getElementById("mat-desc").value.trim();
+      const qtd = parseFloat(document.getElementById("mat-qtd").value) || 0;
+      const valor = parseFloat(document.getElementById("mat-valor").value) || 0;
+
+      if (!desc || qtd <= 0) {
+        alert("Preencha a descrição e uma quantidade maior que zero.");
+        return;
+      }
+
+      materiais.push({ desc, qtd, valor });
+      document.getElementById("mat-desc").value = "";
+      document.getElementById("mat-qtd").value = "1";
+      document.getElementById("mat-valor").value = "0";
+      renderizarMateriais();
+      calcularTudo();
+    }
+
+    function removerMaterial(index) {
+      materiais.splice(index, 1);
+      renderizarMateriais();
+      calcularTudo();
+    }
+
+    function renderizarMateriais() {
+      const tbody = document.getElementById("lista-materiais");
+      tbody.innerHTML = "";
+
+      if (materiais.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:#94a3b8;">Nenhum material adicionado ainda.</td></tr>`;
+        return;
+      }
+
+      materiais.forEach((item, idx) => {
+        const subtotal = item.qtd * item.valor;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.desc}</td>
+          <td>${item.qtd}</td>
+          <td>${formatarMoeda(item.valor)}</td>
+          <td>${formatarMoeda(subtotal)}</td>
+          <td><button class="btn-danger" type="button" onclick="removerMaterial(${idx})">Remover</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function aplicarKitExemplo() {
+      materiais = [
+        { desc: "Rack Parede 6U com bandeja e régua de tomadas", qtd: 1, valor: 580 },
+        { desc: "Cabo UTP Cat6 Caixa 305m", qtd: 1, valor: 790 },
+        { desc: "Conectores RJ45 Cat6 + capas (pacote 50 un.)", qtd: 1, valor: 95 },
+        { desc: "Patch Panel 24 portas Cat6", qtd: 1, valor: 320 }
+      ];
+      document.getElementById("mao-obra").value = "950";
+      document.getElementById("logistica").value = "120";
+      renderizarMateriais();
+      calcularTudo();
+    }
+
+    function calcularTudo() {
+      const totalMateriais = materiais.reduce((acc, m) => acc + (m.qtd * m.valor), 0);
+      const maoObra = parseFloat(document.getElementById("mao-obra").value) || 0;
+      const logistica = parseFloat(document.getElementById("logistica").value) || 0;
+      const impostoPct = (parseFloat(document.getElementById("imposto-pct").value) || 0) / 100;
+      const margemPct = (parseFloat(document.getElementById("margem-pct").value) || 0) / 100;
+
+      const custoBase = totalMateriais + maoObra + logistica;
+      const divisor = Math.max(0.1, 1 - impostoPct - margemPct);
+      const precoFinal = custoBase / divisor;
+      const impostosValor = precoFinal * impostoPct;
+      const lucroValor = precoFinal * margemPct;
+
+      document.getElementById("res-custo-base").textContent = formatarMoeda(custoBase);
+      document.getElementById("res-impostos").textContent = formatarMoeda(impostosValor);
+      document.getElementById("res-lucro").textContent = formatarMoeda(lucroValor);
+      document.getElementById("res-total").textContent = formatarMoeda(precoFinal);
+
+      return {
+        totalMateriais,
+        maoObra,
+        logistica,
+        custoBase,
+        impostosValor,
+        lucroValor,
+        precoFinal
+      };
+    }
+
+    function gerarPDF() {
+      const emp = obterEmpresa();
+      const calc = calcularTudo();
+      const titulo = document.getElementById("titulo-proposta").value.trim() || "Proposta Técnica de TI";
+      const clienteNome = document.getElementById("cliente-nome").value.trim() || "Cliente não informado";
+      const clienteDoc = document.getElementById("cliente-doc").value.trim();
+      const clienteContato = document.getElementById("cliente-contato").value.trim();
+      const validade = document.getElementById("validade-proposta").value || "15";
+      const status = document.getElementById("status-proposta").value;
+      const condicoes = document.getElementById("condicoes-texto").value
+        .split("\n")
+        .filter(l => l.trim() !== "")
+        .map(l => `<div>${l}</div>`)
+        .join("");
+
+      const dataEmissao = new Date().toLocaleDateString("pt-BR");
+
+      const linhasMateriais = materiais.length > 0
+        ? materiais.map(m => `
+            <tr>
+              <td>${m.desc}</td>
+              <td style="text-align:center;">${m.qtd}</td>
+              <td style="text-align:right;">${formatarMoeda(m.valor)}</td>
+              <td style="text-align:right;">${formatarMoeda(m.qtd * m.valor)}</td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="4" style="text-align:center;">Sem itens de material discriminados</td></tr>`;
+
+      const maoObraLogisticaTotal = calc.maoObra + calc.logistica;
+
+      document.getElementById("pdf-area").innerHTML = `
+        <div class="pdf-header">
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; letter-spacing:0.06em; color:#0284c7;">
+              PROPOSTA TÉCNICA E COMERCIAL DE TI
+            </div>
+            <h2 style="font-size:1.3rem; margin:4px 0; color:#0f172a;">${titulo}</h2>
+            <div style="font-size:0.85rem; color:#334155;">
+              <strong>Cliente:</strong> ${clienteNome}
+              ${clienteDoc ? ` (${clienteDoc})` : ""}
+              ${clienteContato ? ` • ${clienteContato}` : ""}
+            </div>
+          </div>
+
+          <div class="pdf-company-right">
+            <div style="font-weight:700; font-size:0.95rem; color:#0f172a;">${emp.nome}</div>
+            ${emp.doc ? `<div>CNPJ/CPF: ${emp.doc}</div>` : ""}
+            ${emp.email ? `<div>${emp.email}</div>` : ""}
+            ${emp.telefone ? `<div>${emp.telefone}</div>` : ""}
+            ${emp.cidade ? `<div>${emp.cidade}</div>` : ""}
+            <div style="margin-top:4px; color:#475569;">Emissão: ${dataEmissao} • Validade: ${validade} dias • ${status}</div>
+          </div>
+        </div>
+
+        <div class="pdf-section-title">Materiais e Equipamentos</div>
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th style="width:70px; text-align:center;">Qtd</th>
+              <th style="width:120px; text-align:right;">Valor Unit.</th>
+              <th style="width:130px; text-align:right;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>${linhasMateriais}</tbody>
+        </table>
+
+        <div class="pdf-section-title">Serviços Técnicos e Condições</div>
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th>Descrição do Serviço</th>
+              <th style="width:140px; text-align:right;">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mão de obra técnica especializada e configuração</td>
+              <td style="text-align:right;">${formatarMoeda(calc.maoObra)}</td>
+            </tr>
+            <tr>
+              <td>Deslocamento e logística operacional</td>
+              <td style="text-align:right;">${formatarMoeda(calc.logistica)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="font-size:0.84rem; color:#1e293b; margin-top:10px;">
+          ${condicoes}
+        </div>
+
+        <div class="pdf-totals">
+          <div><span>Materiais e Equipamentos:</span> <strong>${formatarMoeda(calc.totalMateriais)}</strong></div>
+          <div><span>Serviços e Logística:</span> <strong>${formatarMoeda(maoObraLogisticaTotal)}</strong></div>
+          <div class="grand-total"><span>VALOR TOTAL:</span> <span>${formatarMoeda(calc.precoFinal)}</span></div>
+        </div>
+
+        <div class="pdf-signatures">
+          <div class="sig-box">
+            <div class="sig-line"><strong>${clienteNome}</strong></div>
+            <div style="font-size:0.78rem; color:#475569;">De acordo (Cliente) • Data: ____/____/______</div>
+          </div>
+          <div class="sig-box">
+            <div class="sig-line"><strong>${emp.nome}</strong></div>
+            <div style="font-size:0.78rem; color:#475569;">${emp.responsavel}</div>
+          </div>
+        </div>
+      `;
+
+      window.print();
+    }
+
+    atualizarCabecalhoEmpresa();
+    renderizarMateriais();
+    calcularTudo();
+  </script>
+</body>
+</html>
